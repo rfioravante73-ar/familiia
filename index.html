@@ -3,777 +3,520 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Familia Fioravante - Base de datos Interactivo Online</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Familia Fioravante - Base de Datos</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         :root {
-            /* PALETA AZUL TENUE / ESTELAR */
-            --space-bg: #001a33; 
-            --ui-blue-dim: #002d5a;
-            --glass-bg: rgba(0, 45, 90, 0.7);
-            --glass-border: rgba(100, 200, 255, 0.2);
-            --neon-blue: #00d4ff;
-            --neon-purple: #9d50bb;
-            --neon-gold: #ffcc33;
-            --text-main: #b8d9f5;
-            --text-muted: #6b8fb3;
-            --danger: #ff4d6d;
-            --success: #00f2c3;
-            --warning: #ffcc33;
-            
-            --font-tech: 'Orbitron', sans-serif;
-            --font-body: 'Rajdhani', sans-serif;
+            --primary-blue: #004aad;
+            --secondary-blue: #002d5a;
+            --accent-blue: #38b6ff;
+            --bg-light: #f4f7fa;
+            --text-dark: #1a1a1a;
+            --border-color: #e0e0e0;
+            --danger: #dc3545;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; scrollbar-width: thin; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            background-color: var(--space-bg);
-            color: var(--text-main);
-            font-family: var(--font-body);
-            overflow: hidden;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
             height: 100vh;
-            width: 100vw;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* FONDO DE ESTRELLAS CON GRADIENTE AZUL TENUE */
-        #starfield {
-            position: absolute;
+        /* --- LANDING PAGE --- */
+        #landing-page {
+            position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1;
-            background: radial-gradient(circle at center, #003366 0%, #001122 100%);
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            text-align: center;
+            transition: opacity 1s ease-out;
         }
 
-        /* UI LAYOUT */
-        .app-container {
-            display: grid;
-            grid-template-columns: 300px 1fr;
-            grid-template-rows: 60px 1fr 80px;
+        #landing-page img {
+            max-width: 500px;
+            width: 90%;
+            height: auto;
+            margin-bottom: 40px;
+            animation: fadeInDown 1.5s ease;
+        }
+
+        .loader-bar {
+            margin-top: 40px;
+            width: 200px;
+            height: 4px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loader-progress {
+            height: 100%;
+            background: var(--primary-blue);
+            width: 0%;
+            transition: width 10s linear;
+        }
+
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- APP LAYOUT --- */
+        #app-container {
+            display: none;
+            flex-direction: column;
             height: 100vh;
-            width: 100vw;
-            position: relative;
         }
 
-        /* RESPONSIVE */
-        @media (max-width: 1024px) {
-            .app-container {
-                grid-template-columns: 250px 1fr;
-            }
-            .controls-bottom {
-                left: 270px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .app-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: 60px 1fr 80px;
-            }
-            .sidebar {
-                position: fixed;
-                left: -100%;
-                top: 60px;
-                bottom: 80px;
-                width: 100%;
-                max-width: 400px;
-                transition: left 0.3s ease;
-                z-index: 1000;
-            }
-            .sidebar.active {
-                left: 0;
-            }
-            #universe-viewport {
-                grid-column: 1;
-            }
-            .controls-bottom {
-                left: 20px;
-                right: 20px;
-            }
-            #toggleSidebarBtn {
-                display: block !important;
-            }
-        }
-
-        /* HEADER / HUD */
-        .hud-top {
-            grid-column: 1 / -1;
+        header {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 15px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
-            background: rgba(0, 30, 60, 0.9);
-            border-bottom: 1px solid var(--glass-border);
-            backdrop-filter: blur(10px);
-            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .brand {
-            font-family: var(--font-tech);
-            font-size: 1.2rem;
-            color: var(--neon-blue);
-            text-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
-            letter-spacing: 1px;
+            font-size: 1.5rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .user-controls {
-            display: flex;
-            gap: 15px;
-            align-items: center;
+        .header-actions button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: background 0.3s;
         }
 
-        /* SIDEBAR / DATA CORE */
-        .sidebar {
-            grid-row: 2 / 4;
-            background: var(--glass-bg);
-            border-right: 1px solid var(--glass-border);
-            backdrop-filter: blur(15px);
+        .header-actions button:hover { background: rgba(255,255,255,0.3); }
+
+        /* --- CONTROLS --- */
+        .controls-panel {
+            background: white;
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .form-control {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-primary:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .btn-export {
+            background-color: #198754;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* --- TABLE & PAGINATION --- */
+        .table-container {
+            flex: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            z-index: 90;
+            padding: 20px 30px;
         }
 
-        .sidebar-header {
-            padding: 20px;
-            background: rgba(0, 20, 40, 0.4);
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .search-bar {
-            width: 100%;
-            background: rgba(0, 30, 60, 0.6);
-            border: 1px solid var(--glass-border);
-            color: var(--neon-blue);
-            padding: 10px;
-            border-radius: 4px;
-            font-family: var(--font-body);
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-        }
-
-        .list-container {
+        .table-scroll {
             flex: 1;
             overflow-y: auto;
-            padding: 10px;
+            background: white;
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        .person-card {
-            background: rgba(0, 60, 120, 0.15);
-            border: 1px solid var(--glass-border);
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .person-card:hover {
-            background: rgba(0, 212, 255, 0.1);
-            border-color: var(--neon-blue);
-            transform: translateX(5px);
-        }
-
-        .avatar-small {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: var(--ui-blue-dim);
-            border: 1px solid var(--neon-blue);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-family: var(--font-tech);
-            color: var(--neon-blue);
-        }
-
-        /* MAIN VIEWPORT */
-        #universe-viewport {
-            grid-column: 2;
-            grid-row: 2 / 4;
-            position: relative;
-            overflow: hidden;
+        .data-table {
             width: 100%;
-            height: 100%;
+            border-collapse: collapse;
         }
 
-        #d3-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
+        .data-table th {
+            background-color: #f8f9fa;
+            color: var(--secondary-blue);
+            font-weight: 700;
+            text-align: left;
+            padding: 15px;
+            position: sticky;
+            top: 0;
+            border-bottom: 2px solid var(--border-color);
+            z-index: 10;
         }
 
-        /* CONTROLS BOTTOM */
-        .controls-bottom {
-            position: absolute;
-            bottom: 20px;
-            left: 320px; 
-            right: 20px;
-            background: rgba(0, 35, 75, 0.8);
-            padding: 15px 25px;
-            border-radius: 12px;
-            border: 1px solid var(--glass-border);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            z-index: 50;
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-dark);
+            vertical-align: middle;
         }
 
-        @media (max-width: 768px) {
-            .controls-bottom {
-                left: 20px;
-                right: 20px;
-            }
-        }
-
-        .timeline-slider {
-            flex: 1;
-            -webkit-appearance: none;
-            height: 3px;
-            background: var(--glass-border);
-            outline: none;
-        }
-
-        .timeline-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: var(--neon-blue);
-            cursor: pointer;
-            box-shadow: 0 0 10px var(--neon-blue);
-        }
-
-        .year-display {
-            font-family: var(--font-tech);
-            font-size: 1.2rem;
-            color: var(--neon-blue);
-            min-width: 80px;
-            text-align: right;
-        }
-
-        /* MODALES AZULADOS */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 15, 30, 0.85);
-            backdrop-filter: blur(8px);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .modal-overlay.active { 
-            opacity: 1; 
-            pointer-events: all; 
-        }
-
-        .modal-window {
-            background: #00254d;
-            border: 1px solid var(--neon-blue);
-            width: 90%;
-            max-width: 700px;
-            max-height: 85vh;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
-            color: var(--text-main);
-            overflow-y: auto;
-            position: relative;
-            transform: translateY(20px);
-            transition: transform 0.3s ease;
-        }
-
-        .modal-overlay.active .modal-window {
-            transform: translateY(0);
-        }
-
-        @media (max-width: 768px) {
-            .modal-window {
-                padding: 20px;
-                max-height: 80vh;
-                width: 95%;
-            }
-        }
-
-        .modal-window h2 {
-            font-family: var(--font-tech);
-            color: var(--neon-blue);
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 10px;
-            font-size: 1.1rem;
+        .name-bold { font-weight: 700; color: var(--primary-blue); font-size: 1.05rem; }
+        .date-col { font-family: monospace; font-size: 0.95rem; font-weight: 600; color: #333; }
+        
+        /* Paginación */
+        .pagination-bar {
+            background: white;
+            padding: 10px 20px;
+            border-top: 1px solid var(--border-color);
+            border-radius: 0 0 8px 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
-        /* BOTONES */
-        .btn {
-            padding: 8px 16px;
-            border: 1px solid var(--neon-blue);
+        .page-info { font-size: 0.9rem; color: #666; }
+
+        .pagination-controls { display: flex; gap: 5px; }
+
+        .page-btn {
+            background: white;
+            border: 1px solid var(--border-color);
+            color: var(--primary-blue);
+            padding: 5px 12px;
             border-radius: 4px;
-            background: transparent;
-            color: var(--neon-blue);
-            font-family: var(--font-tech);
-            font-size: 0.75rem;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
-        .btn:hover {
-            background: var(--neon-blue);
-            color: var(--space-bg);
-            box-shadow: 0 0 15px var(--neon-blue);
-        }
+        .page-btn:hover { background: #eef; }
+        .page-btn.active { background: var(--primary-blue); color: white; border-color: var(--primary-blue); }
+        .page-btn:disabled { color: #ccc; cursor: default; background: #f9f9f9; }
 
-        .btn-success {
-            border-color: var(--success);
-            color: var(--success);
-        }
-
-        .btn-success:hover {
-            background: var(--success);
-            color: var(--space-bg);
-        }
-
-        .btn-danger {
-            border-color: var(--danger);
-            color: var(--danger);
-        }
-
-        .btn-danger:hover {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn-warning {
-            border-color: var(--warning);
-            color: var(--warning);
-        }
-
-        .btn-warning:hover {
-            background: var(--warning);
-            color: var(--space-bg);
-        }
-
-        .btn-action {
-            width: 100%;
-            background: rgba(0, 212, 255, 0.1);
-            margin-top: 10px;
-            padding: 12px;
-        }
-
-        /* LOADING */
-        .loading-overlay {
-            position: absolute;
+        /* --- MODALS --- */
+        .modal-overlay {
+            position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--space-bg);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 500;
-            flex-direction: column;
-        }
-
-        .loader-ring {
-            width: 40px; height: 40px;
-            border: 3px solid rgba(0, 212, 255, 0.1);
-            border-top: 3px solid var(--neon-blue);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* FORMULARIOS */
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .form-row > * {
-            flex: 1;
-        }
-
-        @media (max-width: 480px) {
-            .form-row {
-                flex-direction: column;
-                gap: 15px;
-            }
-        }
-
-        input, select, textarea {
-            width: 100%;
-            background: rgba(0, 40, 80, 0.5);
-            border: 1px solid var(--glass-border);
-            color: white;
-            padding: 10px;
-            border-radius: 4px;
-            font-family: var(--font-body);
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--neon-blue);
-            box-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
-
-        /* TOOLTIP GRAFO */
-        .d3-tooltip {
-            position: absolute;
-            background: rgba(0, 45, 90, 0.95);
-            border: 1px solid var(--neon-blue);
-            padding: 10px;
-            border-radius: 4px;
-            pointer-events: none;
-            font-size: 0.85rem;
-            color: white;
-            opacity: 0;
-            z-index: 200;
-            max-width: 200px;
-        }
-
-        /* NOTIFICACIONES */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 6px;
-            background: var(--ui-blue-dim);
-            border: 1px solid var(--neon-blue);
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
-            z-index: 10000;
-            font-family: var(--font-body);
-            color: var(--text-main);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transform: translateX(150%);
-            transition: transform 0.3s ease;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
-        .notification.success {
-            border-color: var(--success);
-            background: rgba(0, 242, 195, 0.1);
-        }
-
-        .notification.error {
-            border-color: var(--danger);
-            background: rgba(255, 77, 109, 0.1);
-        }
-
-        .notification.warning {
-            border-color: var(--warning);
-            background: rgba(255, 204, 51, 0.1);
-        }
-
-        .notification i {
-            font-size: 1.2rem;
-        }
-
-        /* SCROLLBAR PERSONALIZADA */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 30, 60, 0.3);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--neon-blue);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #00b8e6;
-        }
-
-        /* BOTÓN CERRAR MODAL */
-        .close-modal {
-            background: none;
-            border: none;
-            color: var(--neon-blue);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
-
-        .close-modal:hover {
-            background: rgba(0, 212, 255, 0.1);
-        }
-
-        /* ESTILOS PARA LISTA DE BÚSQUEDA */
-        .search-results-header {
-            padding: 10px 15px;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            border-bottom: 1px solid var(--glass-border);
-            margin-bottom: 10px;
-        }
-
-        .empty-search-message {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .empty-search-message i {
-            font-size: 2rem;
-            margin-bottom: 15px;
-            color: var(--glass-border);
-        }
-
-        /* OVERLAY PARA MÓVIL */
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
-            z-index: 999;
+            background: rgba(0,0,0,0.5);
             display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(3px);
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 650px;
+            max-height: 90vh;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
-        .sidebar-overlay.active {
-            display: block;
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-light);
+            border-radius: 8px 8px 0 0;
         }
 
-        /* ESTILOS PARA INPUTS DE FECHA */
-        .date-input {
-            position: relative;
+        .modal-body { padding: 20px; overflow-y: auto; }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .form-full { grid-column: 1 / -1; }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            text-align: right;
         }
 
-        .date-input::after {
-            content: "DD/MM/AAAA";
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            pointer-events: none;
-        }
+        .action-btn { background: none; border: none; cursor: pointer; font-size: 1.1rem; margin: 0 5px; }
+        .btn-edit { color: #f39c12; }
+        .btn-delete { color: var(--danger); }
 
-        input.date-placeholder::placeholder {
-            color: var(--text-muted);
+        /* Responsive Table */
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .data-table th:nth-child(4), .data-table td:nth-child(4), /* Género */
+            .data-table th:nth-child(7), .data-table td:nth-child(7) { /* Padres */
+                display: none; 
+            }
+            .controls-panel { flex-direction: column; }
         }
-
     </style>
 </head>
 <body>
 
-    <div id="starfield"></div>
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div id="landing-page">
+        <img src="https://github.com/rfioravante73-ar/familiia/blob/main/fioravante.png?raw=true" alt="Familia Fioravante">
+        <div class="loader-bar">
+            <div class="loader-progress" id="landingProgress"></div>
+        </div>
+        <button onclick="endLanding()" style="margin-top: 40px; background: #004aad; border: 2px solid #004aad; color: white; padding: 14px 45px; border-radius: 25px; cursor: pointer; font-size: 1.2rem; font-weight: 500; letter-spacing: 0.5px; transition: all 0.3s ease;">Ingresar ahora</button>
+    </div>
 
-    <div class="app-container">
-        <header class="hud-top">
-            <div class="brand"><i class="fas fa-project-diagram"></i> FAMILIA FIORAVANTE</div>
-            <div class="user-controls">
-                <button id="authBtn" class="btn"><i class="fas fa-key"></i> ACCESO ADMIN</button>
-                <button id="toggleSidebarBtn" class="btn" style="display: none;"><i class="fas fa-bars"></i></button>
+    <div id="app-container">
+        <header>
+            <div class="brand"><i class="fas fa-users"></i>Fioravante, Historia de una familia</div>
+            <div class="header-actions">
+                <span id="userStatus" style="font-size: 0.9rem; margin-right: 10px; opacity: 0.8;">Invitado</span>
+                <button id="authBtn" onclick="toggleAuth()"><i class="fas fa-lock"></i> Acceso Admin</button>
             </div>
         </header>
 
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <input type="text" id="searchInput" class="search-bar" placeholder="Buscar por nombre, apellido o lugar...">
-                <button id="addPersonBtn" class="btn btn-action" disabled>
-                    <i class="fas fa-plus"></i> NUEVO REGISTRO
+        <div class="controls-panel">
+            <div class="filter-group">
+                <label>Buscar (Nombre/Bio)</label>
+                <input type="text" id="searchFilter" class="form-control" placeholder="Ej: Mario, Italia...">
+            </div>
+            <div class="filter-group">
+                <label>Lugar (Nacimiento/Defunción)</label>
+                <input type="text" id="placeFilter" class="form-control" placeholder="Ej: Buenos Aires">
+            </div>
+            <div class="filter-group">
+                <label>Rango de Edad</label>
+                <select id="ageFilter" class="form-control">
+                    <option value="all">Todas las edades</option>
+                    <option value="0-20">0 - 20 años</option>
+                    <option value="21-50">21 - 50 años</option>
+                    <option value="51-80">51 - 80 años</option>
+                    <option value="81+">Más de 80 años</option>
+                </select>
+            </div>
+            <div class="filter-group" style="flex: 0 0 auto;">
+                <label>&nbsp;</label>
+                <button class="btn-primary" id="addBtn" onclick="openModal('personModal')" disabled>
+                    <i class="fas fa-plus"></i> Nuevo
                 </button>
             </div>
-            <div class="list-container" id="personList">
-                <div class="empty-search-message">
-                    <i class="fas fa-search"></i>
-                    <div>Busca registros para ver o editar</div>
-                </div>
+            <div class="filter-group" style="flex: 0 0 auto;">
+                <label>&nbsp;</label>
+                <button class="btn-export" onclick="exportPDF()">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
             </div>
-        </aside>
+        </div>
 
-        <main id="universe-viewport">
-            <div id="d3-container" style="width: 100%; height: 100%;"></div>
-            <div class="d3-tooltip" id="graphTooltip"></div>
+        <div class="table-container">
+            <div class="table-scroll">
+                <table class="data-table" id="genealogyTable">
+                    <thead>
+                        <tr>
+                            <th width="120">Nacimiento</th>
+                            <th>Nombre Completo</th>
+                            <th>Lugar</th>
+                            <th>Género</th>
+                            <th>Defunción</th>
+                            <th>Edad (Act/Def)</th>
+                            <th>Padres</th>
+                            <th style="text-align: center;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="8" style="text-align:center; padding: 20px;">Cargando base de datos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
             
-            <div class="loading-overlay" id="mainLoader">
-                <div class="loader-ring"></div>
-                <p style="margin-top: 15px; font-family: var(--font-tech); color: var(--neon-blue); font-size: 0.8rem; letter-spacing: 2px;">CARGANDO CONSTELACIÓN...</p>
-            </div>
-        </main>
-
-        <div class="controls-bottom">
-            <button id="resetViewBtn" class="btn" title="Reiniciar Vista"><i class="fas fa-sync"></i></button>
-            <input type="range" id="timeSlider" class="timeline-slider" min="1900" max="2024" step="1" value="2024">
-            <div class="year-display" id="yearDisplay">2024</div>
-        </div>
-    </div>
-
-    <!-- Modal de Detalles -->
-    <div class="modal-overlay" id="detailModal">
-        <div class="modal-window">
-            <h2>FICHA DE ARCHIVO <button class="close-modal" onclick="closeAllModals()">&times;</button></h2>
-            <div id="detailContent"></div>
-            <div id="detailAdminActions" style="margin-top: 20px; display: none; gap: 10px; justify-content: flex-end;">
-                <button id="btnEditFromDetail" class="btn btn-warning"><i class="fas fa-edit"></i> EDITAR</button>
-                <button id="btnDeleteFromDetail" class="btn btn-danger"><i class="fas fa-trash"></i> BORRAR</button>
+            <div class="pagination-bar">
+                <div class="page-info" id="pageInfo">Mostrando 0-0 de 0</div>
+                <div class="pagination-controls" id="paginationControls">
+                    </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Autenticación -->
-    <div class="modal-overlay" id="authModal">
-        <div class="modal-window" style="max-width: 350px;">
-            <h2>ADMINISTRACIÓN <button class="close-modal" onclick="closeAllModals()">&times;</button></h2>
-            <form id="loginForm">
-                <div class="form-group">
-                    <input type="email" id="loginEmail" placeholder="Correo" required>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="loginPass" placeholder="Contraseña" required>
-                </div>
-                <button type="submit" class="btn btn-action">ENTRAR</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal de Registro/Edición -->
     <div class="modal-overlay" id="personModal">
-        <div class="modal-window">
-            <h2 id="modalTitle">NUEVO REGISTRO <button class="close-modal" onclick="closeAllModals()">&times;</button></h2>
-            <form id="personForm">
-                <input type="hidden" id="pId">
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="pName">Nombre</label>
-                        <input type="text" id="pName" placeholder="Nombre" required>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nuevo Registro</h2>
+                <button class="action-btn" onclick="closeModal('personModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="personForm">
+                    <input type="hidden" id="pId">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label style="font-size:0.8rem">Nombre</label>
+                            <input type="text" id="pName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size:0.8rem">Apellido</label>
+                            <input type="text" id="pLast" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size:0.8rem">Género</label>
+                            <select id="pGender" class="form-control">
+                                <option value="masculino">Masculino</option>
+                                <option value="femenino">Femenino</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size:0.8rem">Lugar de Origen</label>
+                            <input type="text" id="pPlace" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size:0.8rem">Fecha Nacimiento (DD/MM/AAAA)</label>
+                            <input type="text" id="pBirth" class="form-control" placeholder="DD/MM/AAAA" maxlength="10">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size:0.8rem">Fecha Defunción (DD/MM/AAAA)</label>
+                            <input type="text" id="pDeath" class="form-control" placeholder="DD/MM/AAAA" maxlength="10">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size:0.8rem">Padre</label>
+                            <select id="pFather" class="form-control"><option value="">Ninguno</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size:0.8rem">Madre</label>
+                            <select id="pMother" class="form-control"><option value="">Ninguna</option></select>
+                        </div>
+                        <div class="form-group form-full">
+                            <label style="font-size:0.8rem">Biografía / Notas</label>
+                            <textarea id="pBio" class="form-control" rows="3"></textarea>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="pLast">Apellido</label>
-                        <input type="text" id="pLast" placeholder="Apellido" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="pGender">Género</label>
-                        <select id="pGender" required>
-                            <option value="masculino">Masculino</option>
-                            <option value="femenino">Femenino</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="pPlace">Lugar de origen</label>
-                        <input type="text" id="pPlace" placeholder="Lugar de origen">
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="pBirth">Fecha de nacimiento</label>
-                        <input type="text" id="pBirth" placeholder="DD/MM/AAAA" class="date-placeholder" pattern="\d{2}/\d{2}/\d{4}" title="Formato: DD/MM/AAAA">
-                    </div>
-                    <div class="form-group">
-                        <label for="pDeath">Fecha de defunción</label>
-                        <input type="text" id="pDeath" placeholder="DD/MM/AAAA" class="date-placeholder" pattern="\d{2}/\d{2}/\d{4}" title="Formato: DD/MM/AAAA">
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="pFather">Padre</label>
-                        <select id="pFather">
-                            <option value="">Seleccionar padre</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="pMother">Madre</label>
-                        <select id="pMother">
-                            <option value="">Seleccionar madre</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="pBio">Notas o biografía</label>
-                    <textarea id="pBio" placeholder="Notas o biografía..." rows="4"></textarea>
-                </div>
-                
-                <div class="form-row" style="margin-top: 20px;">
-                    <button type="button" class="btn" onclick="closeAllModals()" style="flex: 1;">CANCELAR</button>
-                    <button type="submit" class="btn btn-success" style="flex: 2;">GUARDAR REGISTRO</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal de Confirmación -->
-    <div class="modal-overlay" id="confirmModal">
-        <div class="modal-window" style="max-width: 400px;">
-            <h2>CONFIRMAR ACCIÓN <button class="close-modal" onclick="closeAllModals()">&times;</button></h2>
-            <p id="confirmMessage" style="margin-bottom: 20px;">¿Está seguro de realizar esta acción?</p>
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button id="confirmCancel" class="btn" onclick="closeAllModals()">CANCELAR</button>
-                <button id="confirmAction" class="btn btn-danger">CONFIRMAR</button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" style="background:#6c757d" onclick="closeModal('personModal')">Cancelar</button>
+                <button class="btn-primary" onclick="savePerson()">Guardar</button>
             </div>
         </div>
     </div>
 
-    <!-- Notificación -->
-    <div id="notification" class="notification">
-        <i id="notificationIcon"></i>
-        <span id="notificationText"></span>
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 id="viewTitle">Detalles del Registro</h2>
+                <button class="action-btn" onclick="closeModal('viewModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label style="font-size:0.8rem">Nombre</label>
+                        <div class="form-control" style="background:#f8f9fa" id="vName">-</div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem">Apellido</label>
+                        <div class="form-control" style="background:#f8f9fa" id="vLast">-</div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem">Género</label>
+                        <div class="form-control" style="background:#f8f9fa" id="vGender">-</div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem">Lugar de Origen</label>
+                        <div class="form-control" style="background:#f8f9fa" id="vPlace">-</div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem">Fecha Nacimiento</label>
+                        <div class="form-control" style="background:#f8f9fa" id="vBirth">-</div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem">Fecha Defunción</label>
+                        <div class="form-control" style="background:#f8f9fa" id="vDeath">-</div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem">Padre</label>
+                        <div class="form-control" style="background:#f8f9fa" id="vFather">-</div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem">Madre</label>
+                        <div class="form-control" style="background:#f8f9fa" id="vMother">-</div>
+                    </div>
+                    <div class="form-group form-full">
+                        <label style="font-size:0.8rem">Biografía / Notas</label>
+                        <div class="form-control" style="background:#f8f9fa; min-height: 80px;" id="vBio">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="closeModal('viewModal')">Cerrar</button>
+            </div>
+        </div>
     </div>
 
-    <script>
-        // CONFIG FIREBASE
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-content" style="max-width: 350px;">
+            <div class="modal-header">
+                <h2>Admin</h2>
+                <button class="action-btn" onclick="closeModal('authModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="email" id="loginEmail" class="form-control" placeholder="Email" style="margin-bottom:10px; width:100%">
+                <input type="password" id="loginPass" class="form-control" placeholder="Contraseña" style="width:100%">
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" style="width:100%" onclick="login()">Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyALUNOTt8Ex9j_eeDUtaPqWHmIk_j-VF08",
             authDomain: "familia-genealogia.firebaseapp.com",
@@ -782,855 +525,456 @@
             messagingSenderId: "923693678578",
             appId: "1:923693678578:web:bfed5d66d564d00847356b"
         };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // ESTADO GLOBAL
+        let allPersons = [];
+        let filteredPersons = [];
+        let currentUser = null;
         
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        // Paginación
+        let currentPage = 1;
+        const itemsPerPage = 10;
 
-        const state = {
-            user: null,
-            isAdmin: false,
-            persons: [],
-            selectedId: null,
-            filterYear: 2024,
-            editingId: null,
-            minYear: 1900,
-            maxYear: 2024,
-            simulation: null,
-            svg: null,
-            g: null,
-            link: null,
-            node: null,
-            zoom: null
-        };
+        // --- LANDING ---
+        window.addEventListener('load', () => {
+            document.getElementById('landingProgress').style.width = '100%';
+            setTimeout(() => endLanding(), 10000);
+        });
 
-        // FUNCIONES DE FORMATEO DE FECHA DD/MM/AAAA
-        function formatDateToDDMMAAAA(dateString) {
-            if (!dateString) return '';
+        window.endLanding = function() {
+            const landing = document.getElementById('landing-page');
+            landing.style.opacity = '0';
+            setTimeout(() => {
+                landing.style.display = 'none';
+                document.getElementById('app-container').style.display = 'flex';
+                renderTable();
+            }, 1000);
+        }
+
+        // --- DATA FETCH ---
+        onSnapshot(collection(db, "persons"), (snapshot) => {
+            allPersons = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // Convertir fechas al formato DD/MM/AAAA si están en otro formato
+            allPersons.forEach(p => {
+                if (p.birthDate) p.birthDate = normalizeDate(p.birthDate);
+                if (p.deathDate) p.deathDate = normalizeDate(p.deathDate);
+            });
+            filterAndSortData();
+            updateParentSelects();
+        });
+
+        // --- NORMALIZAR FECHAS A DD/MM/AAAA ---
+        function normalizeDate(dateStr) {
+            if (!dateStr) return '';
             
-            // Si ya está en formato DD/MM/AAAA, retornar tal cual
-            if (dateString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                return dateString;
+            // Si ya está en formato DD/MM/AAAA, devolverlo
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+                return dateStr;
             }
             
-            // Si viene en formato YYYY-MM-DD (de input type="date"), convertirlo
-            if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                const [year, month, day] = dateString.split('-');
-                return `${day}/${month}/${year}`;
+            // Convertir de formato YYYY-MM-DD a DD/MM/AAAA
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                const parts = dateStr.split('-');
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
             }
             
-            // Si es una fecha de JavaScript
-            if (dateString instanceof Date || (typeof dateString === 'string' && Date.parse(dateString))) {
-                const date = new Date(dateString);
+            // Para otros formatos, intentar parsear
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
                 const day = String(date.getDate()).padStart(2, '0');
                 const month = String(date.getMonth() + 1).padStart(2, '0');
                 const year = date.getFullYear();
                 return `${day}/${month}/${year}`;
             }
             
-            return dateString;
+            return dateStr;
         }
 
-        function isValidDDMMAAAA(dateString) {
-            if (!dateString) return false;
-            
-            const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-            if (!regex.test(dateString)) return false;
-            
-            const [, day, month, year] = dateString.match(regex);
-            const dayNum = parseInt(day, 10);
-            const monthNum = parseInt(month, 10);
-            const yearNum = parseInt(year, 10);
-            
-            // Validaciones básicas
-            if (yearNum < 1000 || yearNum > 9999) return false;
-            if (monthNum < 1 || monthNum > 12) return false;
-            if (dayNum < 1 || dayNum > 31) return false;
-            
-            // Validación de días por mes
-            const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
-            return dayNum <= daysInMonth;
-        }
+        // --- FILTER & SORT (ORDEN DESCENDENTE CRONOLÓGICO) ---
+        function filterAndSortData() {
+            const txt = document.getElementById('searchFilter').value.toLowerCase();
+            const plc = document.getElementById('placeFilter').value.toLowerCase();
+            const ageRange = document.getElementById('ageFilter').value;
 
-        function getYearFromDDMMAAAA(dateString) {
-            if (!dateString || !isValidDDMMAAAA(dateString)) return 0;
-            const parts = dateString.split('/');
-            return parseInt(parts[2], 10); // parts[2] es el año
-        }
+            // 1. Filtrar
+            filteredPersons = allPersons.filter(p => {
+                const fullName = `${p.firstName} ${p.lastName}`.toLowerCase();
+                const bio = (p.biography || "").toLowerCase();
+                if (!fullName.includes(txt) && !bio.includes(txt)) return false;
 
-        // STARFIELD
-        function initStarfield() {
-            const canvas = document.createElement('canvas');
-            document.getElementById('starfield').appendChild(canvas);
-            const ctx = canvas.getContext('2d');
-            let w, h, stars = [];
-            const resize = () => { 
-                w = canvas.width = window.innerWidth; 
-                h = canvas.height = window.innerHeight; 
-            };
-            window.onresize = resize; 
-            resize();
-            
-            for(let i=0; i<150; i++) stars.push({
-                x: Math.random()*w, 
-                y: Math.random()*h, 
-                r: Math.random()*1.5, 
-                o: Math.random()
-            });
-            
-            function anim() {
-                ctx.clearRect(0,0,w,h);
-                stars.forEach(s => {
-                    ctx.fillStyle = `rgba(184, 217, 245, ${s.o})`;
-                    ctx.beginPath(); 
-                    ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); 
-                    ctx.fill();
-                    s.o += (Math.random()-0.5)*0.05;
-                    if(s.o<0) s.o=0; 
-                    if(s.o>1) s.o=1;
-                });
-                requestAnimationFrame(anim);
-            }
-            anim();
-        }
+                const origin = (p.birthPlace || "").toLowerCase();
+                if (plc && !origin.includes(plc) && !bio.includes(plc)) return false;
 
-        // NOTIFICACIONES
-        function showNotification(message, type = 'info') {
-            const notification = document.getElementById('notification');
-            const icon = document.getElementById('notificationIcon');
-            const text = document.getElementById('notificationText');
-            
-            notification.className = 'notification';
-            notification.classList.add(type);
-            
-            if (type === 'success') {
-                icon.className = 'fas fa-check-circle';
-            } else if (type === 'error') {
-                icon.className = 'fas fa-exclamation-circle';
-            } else if (type === 'warning') {
-                icon.className = 'fas fa-exclamation-triangle';
-            } else {
-                icon.className = 'fas fa-info-circle';
-            }
-            
-            text.textContent = message;
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        // D3 GRAPH - INICIALIZACIÓN MEJORADA
-        function initGraph() {
-            const cont = document.getElementById('d3-container');
-            
-            // Limpiar contenedor si ya existe
-            d3.select(cont).selectAll("*").remove();
-            
-            // Crear SVG responsive
-            state.svg = d3.select(cont)
-                .append("svg")
-                .attr("width", "100%")
-                .attr("height", "100%")
-                .attr("viewBox", `0 0 ${cont.clientWidth} ${cont.clientHeight}`)
-                .attr("preserveAspectRatio", "xMidYMid meet");
-            
-            state.g = state.svg.append("g");
-            
-            // Configurar zoom
-            state.zoom = d3.zoom()
-                .scaleExtent([0.1, 4])
-                .on("zoom", (event) => {
-                    state.g.attr("transform", event.transform);
-                });
-            
-            state.svg.call(state.zoom);
-            
-            // Crear simulación de fuerzas
-            state.simulation = d3.forceSimulation()
-                .force("link", d3.forceLink()
-                    .id(d => d.id)
-                    .distance(150)
-                    .strength(0.5))
-                .force("charge", d3.forceManyBody()
-                    .strength(-400))
-                .force("center", d3.forceCenter(
-                    cont.clientWidth / 2, 
-                    cont.clientHeight / 2
-                ))
-                .force("collision", d3.forceCollide().radius(40))
-                .alphaDecay(0.05);
-        }
-
-        // ACTUALIZAR GRÁFICO CON LÍNEAS COMPLETAS
-        function updateGraph() {
-            if (!state.persons.length) return;
-            
-            // Filtrar personas que nacieron antes o en el año seleccionado
-            const activeNodes = state.persons.filter(p => {
-                if (!p.birthDate) return false;
-                const birthYear = getYearFromDDMMAAAA(p.birthDate);
-                return birthYear <= state.filterYear;
-            });
-            
-            // Crear mapa de IDs para acceso rápido
-            const nodeMap = new Map();
-            activeNodes.forEach(node => nodeMap.set(node.id, node));
-            
-            // Crear TODAS las conexiones posibles (padre y madre)
-            const allLinks = [];
-            
-            activeNodes.forEach(person => {
-                // Conexión con padre si existe y está en los nodos activos
-                if (person.fatherId && nodeMap.has(person.fatherId)) {
-                    allLinks.push({
-                        source: person.id,
-                        target: person.fatherId,
-                        type: 'parent'
-                    });
+                const age = calculateAgeValue(p.birthDate, p.deathDate);
+                if (ageRange !== 'all') {
+                    if (age === null) return false;
+                    const [minStr, maxStr] = ageRange.split('-');
+                    if (ageRange === '81+') {
+                        if (age <= 80) return false;
+                    } else {
+                        const min = parseInt(minStr);
+                        const max = parseInt(maxStr);
+                        if (age < min || age > max) return false;
+                    }
                 }
-                
-                // Conexión con madre si existe y está en los nodos activos
-                if (person.motherId && nodeMap.has(person.motherId)) {
-                    allLinks.push({
-                        source: person.id,
-                        target: person.motherId,
-                        type: 'parent'
-                    });
-                }
+                return true;
             });
-            
-            // LIMPIAR Y ACTUALIZAR LÍNEAS
-            state.link = state.g.selectAll(".link")
-                .data(allLinks, d => `${d.source}-${d.target}-${d.type}`);
-            
-            // Remover líneas que ya no existen
-            state.link.exit().remove();
-            
-            // Agregar nuevas líneas
-            const linkEnter = state.link.enter()
-                .append("line")
-                .attr("class", "link")
-                .attr("stroke", d => d.type === 'parent' ? "rgba(0, 212, 255, 0.4)" : "rgba(157, 80, 187, 0.4)")
-                .attr("stroke-width", 2)
-                .attr("stroke-dasharray", d => d.type === 'parent' ? "5,5" : "none");
-            
-            state.link = linkEnter.merge(state.link);
-            
-            // LIMPIAR Y ACTUALIZAR NODOS
-            state.node = state.g.selectAll(".node")
-                .data(activeNodes, d => d.id);
-            
-            // Remover nodos que ya no existen
-            state.node.exit().remove();
-            
-            // Agregar nuevos nodos
-            const nodeEnter = state.node.enter()
-                .append("circle")
-                .attr("class", "node")
-                .attr("r", 12)
-                .attr("fill", d => d.gender === 'femenino' ? "#9d50bb" : "#00d4ff")
-                .attr("stroke", d => d.id === state.selectedId ? "#ffcc33" : "#fff")
-                .attr("stroke-width", d => d.id === state.selectedId ? 3 : 2)
-                .style("cursor", "pointer")
-                .call(drag(state.simulation))
-                .on("click", (event, d) => selectPerson(d.id))
-                .on("mouseover", showTooltip)
-                .on("mouseout", hideTooltip);
-            
-            state.node = nodeEnter.merge(state.node);
-            
-            // AGREGAR ETIQUETAS DE NOMBRE
-            let labels = state.g.selectAll(".label")
-                .data(activeNodes, d => d.id);
-            
-            labels.exit().remove();
-            
-            const labelsEnter = labels.enter()
-                .append("text")
-                .attr("class", "label")
-                .attr("text-anchor", "middle")
-                .attr("dy", -15)
-                .attr("fill", "#b8d9f5")
-                .attr("font-size", "10px")
-                .attr("pointer-events", "none")
-                .text(d => d.firstName.substring(0, 10) + (d.firstName.length > 10 ? "..." : ""));
-            
-            labels = labelsEnter.merge(labels);
-            
-            // ACTUALIZAR SIMULACIÓN
-            state.simulation
-                .nodes(activeNodes)
-                .force("link").links(allLinks);
-            
-            // ACTUALIZAR POSICIONES EN CADA "TICK"
-            state.simulation.on("tick", () => {
-                // Actualizar líneas
-                state.link
-                    .attr("x1", d => {
-                        const source = typeof d.source === 'object' ? d.source : nodeMap.get(d.source);
-                        return source ? source.x : 0;
-                    })
-                    .attr("y1", d => {
-                        const source = typeof d.source === 'object' ? d.source : nodeMap.get(d.source);
-                        return source ? source.y : 0;
-                    })
-                    .attr("x2", d => {
-                        const target = typeof d.target === 'object' ? d.target : nodeMap.get(d.target);
-                        return target ? target.x : 0;
-                    })
-                    .attr("y2", d => {
-                        const target = typeof d.target === 'object' ? d.target : nodeMap.get(d.target);
-                        return target ? target.y : 0;
-                    });
+
+            // 2. Ordenar DESCENDENTE por fecha de nacimiento (más reciente primero)
+            filteredPersons.sort((a, b) => {
+                const dateA = parseDate(a.birthDate);
+                const dateB = parseDate(b.birthDate);
                 
-                // Actualizar nodos
-                state.node
-                    .attr("cx", d => d.x)
-                    .attr("cy", d => d.y);
-                
-                // Actualizar etiquetas
-                labels
-                    .attr("x", d => d.x)
-                    .attr("y", d => d.y);
+                // Manejo de nulos: ponerlos al final (personas sin fecha)
+                if (!dateA && !dateB) return 0;
+                if (!dateA) return 1; // A sin fecha va después
+                if (!dateB) return -1; // B sin fecha va después
+
+                // Orden DESCENDENTE (más reciente primero)
+                return dateB.getTime() - dateA.getTime();
             });
-            
-            // REINICIAR SIMULACIÓN
-            state.simulation.alpha(1).restart();
+
+            currentPage = 1;
+            renderTable();
         }
 
-        // FUNCIÓN DRAG PARA NODOS
-        function drag(simulation) {
-            function dragstarted(event) {
-                if (!event.active) simulation.alphaTarget(0.3).restart();
-                event.subject.fx = event.subject.x;
-                event.subject.fy = event.subject.y;
+        // --- PARSEAR FECHAS EN FORMATO DD/MM/AAAA ---
+        function parseDate(str) {
+            if (!str || str.length !== 10) return null;
+            const parts = str.split('/'); // DD/MM/AAAA
+            if (parts.length !== 3) return null;
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1; // Mes 0-11
+            const year = parseInt(parts[2], 10);
+            if (day < 1 || day > 31 || month < 0 || month > 11 || year < 1000) return null;
+            const date = new Date(year, month, day);
+            // Validar fecha
+            if (date.getDate() !== day || date.getMonth() !== month || date.getFullYear() !== year) {
+                return null;
             }
-            
-            function dragged(event) {
-                event.subject.fx = event.x;
-                event.subject.fy = event.y;
+            return date;
+        }
+
+        function calculateAgeValue(birthStr, deathStr) {
+            const birth = parseDate(birthStr);
+            if (!birth) return null;
+
+            const end = deathStr ? parseDate(deathStr) : new Date();
+            if (!end) return null;
+
+            let age = end.getFullYear() - birth.getFullYear();
+            const m = end.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && end.getDate() < birth.getDate())) {
+                age--;
             }
-            
-            function dragended(event) {
-                if (!event.active) simulation.alphaTarget(0);
-                event.subject.fx = null;
-                event.subject.fy = null;
-            }
-            
-            return d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended);
+            return age;
         }
 
-        // TOOLTIPS
-        function showTooltip(event, d) {
-            const tooltip = document.getElementById('graphTooltip');
-            tooltip.style.opacity = 1;
-            tooltip.innerHTML = `
-                <strong>${d.firstName} ${d.lastName}</strong><br>
-                ${d.birthDate ? 'Nac: ' + d.birthDate : ''}
-                ${d.deathDate ? '<br>Def: ' + d.deathDate : ''}
-                ${d.birthPlace ? '<br>Lugar: ' + d.birthPlace : ''}
-            `;
-            tooltip.style.left = event.pageX + 10 + "px";
-            tooltip.style.top = event.pageY - 10 + "px";
+        function getAgeDisplay(birth, death) {
+            const age = calculateAgeValue(birth, death);
+            if (age === null) return '-';
+            return death ? `${age} (Fallecido)` : `${age} años`;
         }
 
-        function hideTooltip() {
-            const tooltip = document.getElementById('graphTooltip');
-            tooltip.style.opacity = 0;
+        function getName(id) {
+            const p = allPersons.find(x => x.id === id);
+            return p ? `${p.firstName} ${p.lastName}` : '-';
         }
 
-        // CALCULAR AÑOS MÍNIMO Y MÁXIMO CON FORMATO DD/MM/AAAA
-        function calculateYearRange() {
-            if (state.persons.length === 0) {
-                state.minYear = 1900;
-                state.maxYear = new Date().getFullYear();
+        // --- RENDERIZADO TABLA (ORDEN DESCENDENTE) ---
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const totalItems = filteredPersons.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageData = filteredPersons.slice(start, end);
+
+            tbody.innerHTML = '';
+
+            if (totalItems === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 20px;">No hay resultados con estos filtros.</td></tr>';
+                renderPagination(0, 0, 0);
                 return;
             }
-            
-            let minYear = Infinity;
-            let maxYear = -Infinity;
-            
-            state.persons.forEach(p => {
-                if (p.birthDate) {
-                    const birthYear = getYearFromDDMMAAAA(p.birthDate);
-                    if (birthYear && birthYear < minYear) minYear = birthYear;
-                    if (birthYear && birthYear > maxYear) maxYear = birthYear;
-                }
-                
-                if (p.deathDate) {
-                    const deathYear = getYearFromDDMMAAAA(p.deathDate);
-                    if (deathYear && deathYear > maxYear) maxYear = deathYear;
-                }
-            });
-            
-            // Ajustes mínimos
-            if (minYear === Infinity) minYear = 1900;
-            if (maxYear === -Infinity) maxYear = new Date().getFullYear();
-            
-            // Asegurar rango mínimo de 30 años
-            const yearRange = maxYear - minYear;
-            if (yearRange < 30) {
-                minYear = Math.max(1900, minYear - 15);
-                maxYear = Math.min(new Date().getFullYear(), maxYear + 15);
-            }
-            
-            state.minYear = minYear;
-            state.maxYear = Math.max(maxYear, new Date().getFullYear());
-            
-            // Actualizar slider
-            const slider = document.getElementById('timeSlider');
-            slider.min = state.minYear;
-            slider.max = state.maxYear;
-            slider.value = state.maxYear;
-            
-            // Actualizar visualización
-            state.filterYear = state.maxYear;
-            document.getElementById('yearDisplay').innerText = state.maxYear;
-        }
 
-        // APP LOGIC
-        function loadData() {
-            db.collection('persons').get().then(snap => {
-                state.persons = snap.docs.map(doc => {
-                    const data = doc.data();
-                    // Formatear fechas al cargar desde Firebase
-                    return {
-                        id: doc.id,
-                        ...data,
-                        birthDate: formatDateToDDMMAAAA(data.birthDate),
-                        deathDate: formatDateToDDMMAAAA(data.deathDate)
-                    };
-                });
-                calculateYearRange();
-                updateSearchResults();
-                updateGraph();
-                updateSelects();
-                document.getElementById('mainLoader').style.display = 'none';
+            pageData.forEach(p => {
+                const ageDisplay = getAgeDisplay(p.birthDate, p.deathDate);
+                const tr = document.createElement('tr');
                 
-                // Escuchar cambios en tiempo real
-                db.collection('persons').onSnapshot(snap => {
-                    state.persons = snap.docs.map(doc => {
-                        const data = doc.data();
-                        return {
-                            id: doc.id,
-                            ...data,
-                            birthDate: formatDateToDDMMAAAA(data.birthDate),
-                            deathDate: formatDateToDDMMAAAA(data.deathDate)
-                        };
-                    });
-                    calculateYearRange();
-                    updateSearchResults();
-                    updateGraph();
-                    updateSelects();
-                });
-            }).catch(err => {
-                console.error("Error cargando datos:", err);
-                showNotification("Error al cargar datos", "error");
-                document.getElementById('mainLoader').style.display = 'none';
-            });
-        }
-
-        // ACTUALIZAR RESULTADOS DE BÚSQUEDA
-        function updateSearchResults() {
-            const list = document.getElementById('personList');
-            const q = document.getElementById('searchInput').value.toLowerCase().trim();
-            
-            if (q === '') {
-                list.innerHTML = `
-                    <div class="empty-search-message">
-                        <i class="fas fa-search"></i>
-                        <div>Busca registros para ver o editar</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            const filtered = state.persons.filter(p => 
-                (p.firstName && p.firstName.toLowerCase().includes(q)) ||
-                (p.lastName && p.lastName.toLowerCase().includes(q)) ||
-                (p.birthPlace && p.birthPlace.toLowerCase().includes(q)) ||
-                (p.biography && p.biography.toLowerCase().includes(q))
-            );
-            
-            if (filtered.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-search-message">
-                        <i class="fas fa-search"></i>
-                        <div>No se encontraron registros para "${q}"</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            let html = `<div class="search-results-header">${filtered.length} resultado(s) encontrado(s)</div>`;
-            
-            filtered.forEach(p => {
-                html += `
-                    <div class="person-card" onclick="selectPerson('${p.id}')">
-                        <div class="avatar-small" style="border-color: ${p.gender === 'femenino' ? '#9d50bb' : '#00d4ff'}">
-                            ${p.firstName ? p.firstName[0] : ''}${p.lastName ? p.lastName[0] : ''}
+                tr.innerHTML = `
+                    <td class="date-col">${p.birthDate || '<span style="color:#999">-</span>'}</td>
+                    <td>
+                        <div class="name-bold">${p.firstName} ${p.lastName}</div>
+                        <div style="font-size:0.8rem; color:#666;">${(p.biography || "").substring(0, 30)}...</div>
+                    </td>
+                    <td>${p.birthPlace || '-'}</td>
+                    <td>${p.gender === 'femenino' ? '<i class="fas fa-venus" style="color:#e91e63"></i>' : '<i class="fas fa-mars" style="color:#2196f3"></i>'}</td>
+                    <td>${p.deathDate || '<span style="color:#28a745; font-size:0.85rem">Vivo/a</span>'}</td>
+                    <td><strong>${ageDisplay}</strong></td>
+                    <td>
+                        <div style="font-size:0.8rem">
+                            P: ${getName(p.fatherId)}<br>
+                            M: ${getName(p.motherId)}
                         </div>
-                        <div>
-                            <div style="font-size:0.9rem">${p.firstName} ${p.lastName}</div>
-                            <div style="color:var(--text-muted); font-size:0.7rem">
-                                ${p.birthDate ? getYearFromDDMMAAAA(p.birthDate) : '????'} 
-                                ${p.birthPlace ? ' | ' + p.birthPlace : ''}
-                            </div>
-                        </div>
-                    </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <button class="action-btn" title="Ver" onclick="viewPerson('${p.id}')"><i class="fas fa-eye" style="color:#004aad"></i></button>
+                        ${currentUser ? `
+                            <button class="action-btn btn-edit" onclick="editPerson('${p.id}')"><i class="fas fa-pencil-alt"></i></button>
+                            <button class="action-btn btn-delete" onclick="deletePerson('${p.id}')"><i class="fas fa-trash-alt"></i></button>
+                        ` : ''}
+                    </td>
                 `;
+                tbody.appendChild(tr);
             });
-            
-            list.innerHTML = html;
+
+            renderPagination(totalItems, totalPages, start + 1, Math.min(end, totalItems));
         }
 
-        function selectPerson(id) {
-            const p = state.persons.find(x => x.id === id);
-            if (!p) return;
+        function renderPagination(total, pages, showStart, showEnd) {
+            const info = document.getElementById('pageInfo');
+            const controls = document.getElementById('paginationControls');
             
-            state.selectedId = id;
-            document.getElementById('detailContent').innerHTML = `
-                <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-                    <div class="avatar-small" style="width: 60px; height: 60px; font-size: 1.2rem;">
-                        ${p.firstName ? p.firstName[0] : ''}${p.lastName ? p.lastName[0] : ''}
-                    </div>
-                    <div>
-                        <h3 style="color: var(--neon-blue); margin-bottom: 5px;">${p.firstName} ${p.lastName}</h3>
-                        <div style="color: var(--text-muted); font-size: 0.9rem;">
-                            ${p.gender === 'femenino' ? '♀ Femenino' : '♂ Masculino'}
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                    <div>
-                        <div style="color: var(--text-muted); font-size: 0.8rem;">NACIMIENTO</div>
-                        <div>${p.birthDate || 'No registrado'}</div>
-                    </div>
-                    <div>
-                        <div style="color: var(--text-muted); font-size: 0.8rem;">DEFUNCIÓN</div>
-                        <div>${p.deathDate || 'No registrado'}</div>
-                    </div>
-                    <div>
-                        <div style="color: var(--text-muted); font-size: 0.8rem;">LUGAR DE ORIGEN</div>
-                        <div>${p.birthPlace || 'No registrado'}</div>
-                    </div>
-                    <div>
-                        <div style="color: var(--text-muted); font-size: 0.8rem;">ID REGISTRO</div>
-                        <div style="font-family: var(--font-tech); font-size: 0.8rem;">${p.id}</div>
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 10px;">
-                    <div style="color: var(--text-muted); font-size: 0.8rem;">PADRE</div>
-                    <div>${getParentName(p.fatherId) || 'Desconocido'}</div>
-                </div>
-                
-                <div style="margin-bottom: 20px;">
-                    <div style="color: var(--text-muted); font-size: 0.8rem;">MADRE</div>
-                    <div>${getParentName(p.motherId) || 'Desconocida'}</div>
-                </div>
-                
-                <div>
-                    <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 5px;">NOTAS BIOGRÁFICAS</div>
-                    <div style="background: rgba(0, 40, 80, 0.3); padding: 15px; border-radius: 4px; border: 1px solid var(--glass-border);">
-                        ${p.biography || 'Sin biografía en el archivo.'}
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('detailAdminActions').style.display = state.isAdmin ? 'flex' : 'none';
-            openModal('detailModal');
-            
-            // Actualizar gráfico para destacar nodo seleccionado
-            updateGraph();
-        }
-
-        function getParentName(parentId) {
-            if (!parentId) return null;
-            const parent = state.persons.find(p => p.id === parentId);
-            return parent ? `${parent.firstName} ${parent.lastName}` : null;
-        }
-
-        function updateSelects() {
-            const f = document.getElementById('pFather'), m = document.getElementById('pMother');
-            f.innerHTML = '<option value="">Seleccionar padre</option>';
-            m.innerHTML = '<option value="">Seleccionar madre</option>';
-            
-            state.persons.forEach(p => {
-                const birthYear = p.birthDate ? getYearFromDDMMAAAA(p.birthDate) : null;
-                const opt = `<option value="${p.id}">${p.firstName} ${p.lastName} ${birthYear ? '(' + birthYear + ')' : ''}</option>`;
-                if(p.gender === 'masculino') f.innerHTML += opt; 
-                if(p.gender === 'femenino') m.innerHTML += opt;
-            });
-        }
-
-        // FORMULARIO DE PERSONA CON VALIDACIÓN DE FECHA
-        function openPersonForm(personId = null) {
-            state.editingId = personId;
-            const form = document.getElementById('personForm');
-            const modalTitle = document.getElementById('modalTitle');
-            
-            // Aplicar máscara de fecha a los inputs
-            applyDateMask('pBirth');
-            applyDateMask('pDeath');
-            
-            if (personId) {
-                modalTitle.innerHTML = 'EDITAR REGISTRO <button class="close-modal" onclick="closeAllModals()">&times;</button>';
-                const person = state.persons.find(p => p.id === personId);
-                if (person) {
-                    document.getElementById('pId').value = person.id;
-                    document.getElementById('pName').value = person.firstName || '';
-                    document.getElementById('pLast').value = person.lastName || '';
-                    document.getElementById('pGender').value = person.gender || 'masculino';
-                    document.getElementById('pBirth').value = person.birthDate || '';
-                    document.getElementById('pDeath').value = person.deathDate || '';
-                    document.getElementById('pPlace').value = person.birthPlace || '';
-                    document.getElementById('pFather').value = person.fatherId || '';
-                    document.getElementById('pMother').value = person.motherId || '';
-                    document.getElementById('pBio').value = person.biography || '';
-                }
-            } else {
-                modalTitle.innerHTML = 'NUEVO REGISTRO <button class="close-modal" onclick="closeAllModals()">&times;</button>';
-                form.reset();
-                document.getElementById('pId').value = '';
-                document.getElementById('pGender').value = 'masculino';
-            }
-            
-            openModal('personModal');
-        }
-
-        // MÁSCARA DE FECHA PARA INPUTS
-        function applyDateMask(elementId) {
-            const input = document.getElementById(elementId);
-            if (!input) return;
-            
-            input.addEventListener('input', function(e) {
-                let value = e.target.value.replace(/\D/g, '');
-                
-                if (value.length > 8) {
-                    value = value.substring(0, 8);
-                }
-                
-                if (value.length > 4) {
-                    value = value.substring(0, 2) + '/' + value.substring(2, 4) + '/' + value.substring(4, 8);
-                } else if (value.length > 2) {
-                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
-                }
-                
-                e.target.value = value;
-            });
-        }
-
-        // GUARDAR PERSONA CON VALIDACIÓN DE FECHA
-        document.getElementById('personForm').onsubmit = async (e) => {
-            e.preventDefault();
-            
-            const birthDateInput = document.getElementById('pBirth').value.trim();
-            const deathDateInput = document.getElementById('pDeath').value.trim();
-            
-            // Validar formato de fechas
-            if (birthDateInput && !isValidDDMMAAAA(birthDateInput)) {
-                showNotification('Fecha de nacimiento no válida. Use formato DD/MM/AAAA', 'error');
+            if (total === 0) {
+                info.innerText = "Sin resultados";
+                controls.innerHTML = "";
                 return;
             }
+
+            info.innerText = `Mostrando ${showStart}-${showEnd} de ${total}`;
             
-            if (deathDateInput && !isValidDDMMAAAA(deathDateInput)) {
-                showNotification('Fecha de defunción no válida. Use formato DD/MM/AAAA', 'error');
-                return;
-            }
+            let html = '';
+            html += `<button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
             
-            const personData = {
-                firstName: document.getElementById('pName').value.trim(),
-                lastName: document.getElementById('pLast').value.trim(),
-                gender: document.getElementById('pGender').value,
-                birthDate: birthDateInput || null,
-                deathDate: deathDateInput || null,
-                birthPlace: document.getElementById('pPlace').value.trim() || null,
-                fatherId: document.getElementById('pFather').value || null,
-                motherId: document.getElementById('pMother').value || null,
-                biography: document.getElementById('pBio').value.trim() || null,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            
-            try {
-                if (state.editingId) {
-                    await db.collection('persons').doc(state.editingId).update(personData);
-                    showNotification('Registro actualizado correctamente', 'success');
-                } else {
-                    personData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                    await db.collection('persons').add(personData);
-                    showNotification('Nuevo registro creado', 'success');
+            for(let i = 1; i <= pages; i++) {
+                if (i === 1 || i === pages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                     html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    html += `<span style="padding:0 5px;">..</span>`;
                 }
-                
-                closeAllModals();
-                state.editingId = null;
-                
-                // Limpiar búsqueda
-                document.getElementById('searchInput').value = '';
-                updateSearchResults();
-                
-            } catch (error) {
-                console.error("Error guardando registro:", error);
-                showNotification('Error al guardar registro: ' + error.message, 'error');
             }
+
+            html += `<button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === pages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
+            
+            controls.innerHTML = html;
+        }
+
+        window.changePage = (page) => {
+            if (page < 1 || page > Math.ceil(filteredPersons.length / itemsPerPage)) return;
+            currentPage = page;
+            renderTable();
         };
 
-        // ELIMINAR PERSONA
-        function confirmDelete(personId) {
-            const person = state.persons.find(p => p.id === personId);
-            if (!person) return;
-            
-            document.getElementById('confirmMessage').innerHTML = `
-                ¿Está seguro de eliminar el registro de <strong>${person.firstName} ${person.lastName}</strong>?<br>
-                <span style="color: var(--danger); font-size: 0.9rem;">Esta acción no se puede deshacer.</span>
-            `;
-            
-            document.getElementById('confirmAction').onclick = async () => {
-                try {
-                    await db.collection('persons').doc(personId).delete();
-                    showNotification('Registro eliminado correctamente', 'success');
-                    closeAllModals();
-                    state.selectedId = null;
-                    
-                    // Limpiar búsqueda
-                    document.getElementById('searchInput').value = '';
-                    updateSearchResults();
-                    
-                } catch (error) {
-                    console.error("Error eliminando registro:", error);
-                    showNotification('Error al eliminar registro', 'error');
-                }
-            };
-            
-            openModal('confirmModal');
-        }
-
-        // AUTH & MODALS
-        document.getElementById('authBtn').onclick = () => state.user ? auth.signOut() : openModal('authModal');
-        document.getElementById('loginForm').onsubmit = (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPass').value;
-            
-            auth.signInWithEmailAndPassword(email, password)
-                .then(() => {
-                    closeAllModals();
-                    showNotification('Acceso concedido', 'success');
-                })
-                .catch(err => {
-                    console.error("Error de acceso:", err);
-                    showNotification('Error de acceso: ' + err.message, 'error');
-                });
-        };
-
-        auth.onAuthStateChanged(user => {
-            state.user = user;
-            state.isAdmin = !!user;
-            document.getElementById('authBtn').innerHTML = user ? 
-                '<i class="fas fa-sign-out-alt"></i> SALIR' : 
-                '<i class="fas fa-key"></i> ACCESO ADMIN';
-            document.getElementById('addPersonBtn').disabled = !user;
+        // --- LISTENERS ---
+        ['searchFilter', 'placeFilter', 'ageFilter'].forEach(id => {
+            document.getElementById(id).addEventListener('input', filterAndSortData);
         });
 
-        // TOGGLE SIDEBAR PARA MÓVIL
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-
-        // EVENT LISTENERS
-        document.getElementById('addPersonBtn').onclick = () => openPersonForm();
-        document.getElementById('btnEditFromDetail').onclick = () => {
-            closeAllModals();
-            setTimeout(() => openPersonForm(state.selectedId), 300);
+        // --- MODALES ---
+        window.openModal = (id) => {
+            document.getElementById(id).classList.add('active');
+            if (id === 'personModal' && !document.getElementById('pId').value) {
+                document.getElementById('personForm').reset();
+                document.getElementById('modalTitle').innerText = "Nuevo Registro";
+            }
         };
-        document.getElementById('btnDeleteFromDetail').onclick = () => {
-            closeAllModals();
-            setTimeout(() => confirmDelete(state.selectedId), 300);
-        };
-
-        function openModal(id) { 
-            document.getElementById(id).classList.add('active'); 
-        }
         
-        function closeAllModals() { 
-            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active')); 
-            // También cerrar sidebar en móvil
-            document.getElementById('sidebar').classList.remove('active');
-            document.getElementById('sidebarOverlay').classList.remove('active');
-        }
-
-        // SLIDER
-        document.getElementById('timeSlider').oninput = (e) => {
-            state.filterYear = parseInt(e.target.value);
-            document.getElementById('yearDisplay').innerText = state.filterYear;
-            updateGraph();
+        window.closeModal = (id) => {
+            document.getElementById(id).classList.remove('active');
+            if (id === 'personModal') document.getElementById('pId').value = '';
         };
 
-        // RESET VIEW
-        document.getElementById('resetViewBtn').onclick = () => {
-            if (state.svg && state.zoom) {
-                state.svg.transition()
-                    .duration(750)
-                    .call(state.zoom.transform, d3.zoomIdentity);
+        window.viewPerson = (id) => {
+            const p = allPersons.find(x => x.id === id);
+            if (!p) return;
+            
+            document.getElementById('vName').innerText = p.firstName;
+            document.getElementById('vLast').innerText = p.lastName;
+            document.getElementById('vGender').innerText = p.gender;
+            document.getElementById('vPlace').innerText = p.birthPlace || '-';
+            document.getElementById('vBirth').innerText = p.birthDate || '-';
+            document.getElementById('vDeath').innerText = p.deathDate || 'Vivo/a';
+            document.getElementById('vFather').innerText = getName(p.fatherId);
+            document.getElementById('vMother').innerText = getName(p.motherId);
+            document.getElementById('vBio').innerText = p.biography || 'Sin información';
+            document.getElementById('viewTitle').innerText = `${p.firstName} ${p.lastName}`;
+            
+            openModal('viewModal');
+        };
+
+        // --- CRUD (SOLO ADMIN) ---
+        window.savePerson = async () => {
+            const id = document.getElementById('pId').value;
+            const data = {
+                firstName: document.getElementById('pName').value,
+                lastName: document.getElementById('pLast').value,
+                gender: document.getElementById('pGender').value,
+                birthPlace: document.getElementById('pPlace').value,
+                birthDate: document.getElementById('pBirth').value,
+                deathDate: document.getElementById('pDeath').value,
+                fatherId: document.getElementById('pFather').value,
+                motherId: document.getElementById('pMother').value,
+                biography: document.getElementById('pBio').value,
+                updatedAt: serverTimestamp()
+            };
+
+            // Validar formato de fecha DD/MM/AAAA
+            const birthDate = parseDate(data.birthDate);
+            const deathDate = data.deathDate ? parseDate(data.deathDate) : null;
+            
+            if (data.birthDate && !birthDate) {
+                alert("Formato de fecha de nacimiento inválido. Use DD/MM/AAAA");
+                return;
+            }
+            
+            if (data.deathDate && !deathDate) {
+                alert("Formato de fecha de defunción inválido. Use DD/MM/AAAA");
+                return;
+            }
+
+            try {
+                if (id) await updateDoc(doc(db, "persons", id), data);
+                else {
+                    data.createdAt = serverTimestamp();
+                    await addDoc(collection(db, "persons"), data);
+                }
+                closeModal('personModal');
+            } catch (e) { alert("Error: " + e.message); }
+        };
+
+        window.editPerson = (id) => {
+            if (!currentUser) {
+                alert("Solo el administrador puede editar registros");
+                return;
+            }
+            const p = allPersons.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('pId').value = p.id;
+            document.getElementById('pName').value = p.firstName;
+            document.getElementById('pLast').value = p.lastName;
+            document.getElementById('pGender').value = p.gender;
+            document.getElementById('pPlace').value = p.birthPlace || '';
+            document.getElementById('pBirth').value = p.birthDate || '';
+            document.getElementById('pDeath').value = p.deathDate || '';
+            document.getElementById('pFather').value = p.fatherId || '';
+            document.getElementById('pMother').value = p.motherId || '';
+            document.getElementById('pBio').value = p.biography || '';
+            document.getElementById('modalTitle').innerText = "Editar Registro";
+            openModal('personModal');
+        };
+
+        window.deletePerson = async (id) => {
+            if (!currentUser) {
+                alert("Solo el administrador puede borrar registros");
+                return;
+            }
+            if(confirm("¿Seguro de borrar este registro?")) {
+                try {
+                    await deleteDoc(doc(db, "persons", id));
+                } catch (e) { alert("Error: " + e.message); }
             }
         };
 
-        // BUSQUEDA
-        document.getElementById('searchInput').oninput = updateSearchResults;
+        function updateParentSelects() {
+            const f = document.getElementById('pFather');
+            const m = document.getElementById('pMother');
+            const curF = f.value; const curM = m.value;
+            f.innerHTML = '<option value="">Ninguno</option>';
+            m.innerHTML = '<option value="">Ninguna</option>';
+            const sorted = [...allPersons].sort((a,b) => a.firstName.localeCompare(b.firstName));
+            sorted.forEach(p => {
+                const opt = `<option value="${p.id}">${p.firstName} ${p.lastName}</option>`;
+                if (p.gender === 'masculino') f.innerHTML += opt;
+                if (p.gender === 'femenino') m.innerHTML += opt;
+            });
+            f.value = curF; m.value = curM;
+        }
+
+        // --- AUTH ---
+        window.toggleAuth = () => currentUser ? signOut(auth) : openModal('authModal');
         
-        // INICIALIZACIÓN
-        window.onload = () => {
-            initStarfield();
-            initGraph();
-            loadData();
+        window.login = () => {
+            signInWithEmailAndPassword(auth, 
+                document.getElementById('loginEmail').value, 
+                document.getElementById('loginPass').value
+            ).then(() => closeModal('authModal')).catch(e => alert(e.message));
+        };
+
+        onAuthStateChanged(auth, user => {
+            currentUser = user;
+            document.getElementById('authBtn').innerHTML = user ? '<i class="fas fa-sign-out-alt"></i> Salir' : '<i class="fas fa-lock"></i> Acceso Admin';
+            document.getElementById('userStatus').innerText = user ? "Administrador" : "Invitado";
+            document.getElementById('addBtn').disabled = !user;
+            renderTable();
+        });
+
+        // --- PDF EXPORT ---
+        window.exportPDF = () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
             
-            // Evento para cerrar modales con Escape
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeAllModals();
+            doc.setFontSize(18);
+            doc.text("Familia Fioravante - Reporte Genealógico", 14, 20);
+            doc.setFontSize(10);
+            doc.text(`Generado: ${new Date().toLocaleDateString()}`, 14, 28);
+            doc.text(`Registros: ${filteredPersons.length}`, 14, 34);
+
+            const rows = filteredPersons.map(p => [
+                p.birthDate || '-',
+                `${p.firstName} ${p.lastName}`,
+                p.birthPlace || '-',
+                p.deathDate || 'Vivo',
+                getAgeDisplay(p.birthDate, p.deathDate),
+                getName(p.fatherId)
+            ]);
+
+            doc.autoTable({
+                head: [['Nacimiento', 'Nombre', 'Lugar', 'Defunción', 'Edad', 'Padre']],
+                body: rows,
+                startY: 40,
+                theme: 'grid',
+                headStyles: { fillColor: [0, 74, 173] }
+            });
+            doc.save("Reporte_Fioravante.pdf");
+        };
+
+        // --- INPUT MASKS (DD/MM/AAAA) ---
+        ['pBirth', 'pDeath'].forEach(id => {
+            const el = document.getElementById(id);
+            el.addEventListener('input', function(e) {
+                let v = this.value.replace(/\D/g,'');
+                if (v.length > 8) v = v.substring(0, 8);
+                
+                if (v.length >= 5) {
+                    this.value = v.replace(/^(\d{2})(\d{2})(\d{0,4})/, "$1/$2/$3");
+                } else if (v.length >= 3) {
+                    this.value = v.replace(/^(\d{2})(\d{0,2})/, "$1/$2");
+                } else {
+                    this.value = v;
+                }
             });
             
-            // Evento para cerrar modals al hacer click fuera
-            document.querySelectorAll('.modal-overlay').forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) closeAllModals();
-                });
-            });
-            
-            // Redimensionar gráfico al cambiar tamaño de ventana
-            window.addEventListener('resize', () => {
-                if (state.svg) {
-                    const cont = document.getElementById('d3-container');
-                    state.svg
-                        .attr("viewBox", `0 0 ${cont.clientWidth} ${cont.clientHeight}`);
-                    
-                    if (state.simulation) {
-                        state.simulation
-                            .force("center", d3.forceCenter(
-                                cont.clientWidth / 2, 
-                                cont.clientHeight / 2
-                            ))
-                            .alpha(0.5).restart();
+            // Validar al perder foco
+            el.addEventListener('blur', function() {
+                if (this.value) {
+                    const date = parseDate(this.value);
+                    if (!date) {
+                        alert("Formato de fecha inválido. Use DD/MM/AAAA");
+                        this.focus();
                     }
                 }
             });
-            
-            // Mostrar/ocultar sidebar en móvil
-            document.getElementById('toggleSidebarBtn').onclick = toggleSidebar;
-            
-            // Aplicar máscaras de fecha a los inputs
-            applyDateMask('pBirth');
-            applyDateMask('pDeath');
-        };
+        });
 
+        window.changePage = changePage;
     </script>
 </body>
 </html>
